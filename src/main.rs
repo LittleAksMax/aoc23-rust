@@ -1,7 +1,7 @@
 use std::fs;
 
-const TESTMODE: bool = false;
-const DAY: u8 = 1;
+const TESTMODE: bool = true;
+const DAY: u8 = 3;
 
 fn main() {
     assert!(DAY >= 1 && DAY <= 25);
