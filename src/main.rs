@@ -3,11 +3,6 @@ use std::fs;
 const TESTMODE: bool = false;
 const DAY: u8 = 2;
 
-// 12 red cubes, 13 green cubes, and 14 blue cubes?
-const RED  : u8 = 12;
-const GREEN: u8 = 13;
-const BLUE : u8 = 14;
-
 fn main() {
     assert!(DAY >= 1 && DAY <= 25);
     let contents: String;
@@ -20,7 +15,7 @@ fn main() {
     }
 
     /* CODE */
-    let mut total = 0;
+    let mut total: usize = 0;
 
     for (game_idx, line) in contents.lines().enumerate() {
         // separate game_data from input line (i.e., stuff after 'Game xyz: ')
@@ -28,25 +23,19 @@ fn main() {
         let game_data = &line[format!("Game {}: ", game_id).len()..];
         // println!("{}", game_data);
 
-        let mut impossible = false;
+        // store the fewest required of each colour
+        let mut min_red  : usize = 0;
+        let mut min_green: usize = 0;
+        let mut min_blue : usize = 0;
+        
         // iterate through moves in game
         for handful in game_data.split("; ") {
-            // just skip each consequent handful if we already
-            // decided the game is impossible
-            if impossible {
-                continue;
-            }
-
-            let mut red: u8 = 0;
-            let mut green: u8 = 0;
-            let mut blue: u8 = 0;
-
             for group in handful.split(", ") {
                 let num_and_clr: Vec<&str> = group.split(' ').collect();
 
                 assert!(num_and_clr.len() == 2, "`num_and_clr` must have 2 elements exactly.");
 
-                let num = match (*num_and_clr.first().unwrap()).parse::<u8>() {
+                let num = match (*num_and_clr.first().unwrap()).parse::<usize>() {
                     Ok(x) => x,
                     _ => { // this should never happen
                         assert!(false, "Must be able to parse into from first in each group.");
@@ -60,30 +49,29 @@ fn main() {
 
                 match clr {
                     "red" => {
-                        red += num;
+                        if num > min_red {
+                            min_red = num;
+                        }
                     },
                     "green" => {
-                        green += num;
+                        if num > min_green {
+                            min_green = num;
+                        }
                     },
                     "blue" => {
-                        blue += num;
+                        if num > min_blue {
+                            min_blue = num;
+                        }
                     },
                     _ => {
                         assert!(false, "`clr` must be one of 'red', 'green', 'blue'.");
                     }
                 }
             }
-
-            // this is an impossible configuration
-            if red > RED || green > GREEN || blue > BLUE {
-                // println!("Game ID: {} (R, G, B): ({}, {}, {})", game_id, red, green, blue);
-                impossible = true;
-            }
         }
 
-        if !impossible {
-            total += game_id;
-        }
+        // add power to total
+        total += min_red * min_green * min_blue;
     }
     println!("Sum of IDs: {}", total);
 }
