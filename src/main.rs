@@ -1,4 +1,4 @@
-use std::{fs, collections::HashSet};
+use std::{fs, collections::HashMap};
 
 const TESTMODE: bool = false;
 const DAY: u8 = 3;
@@ -27,7 +27,7 @@ fn main() {
 
     /* CODE */
     // loop through and add all the locations of the symbols
-    let mut syms: HashSet<i32> = HashSet::new();
+    let mut syms: HashMap<i32, (char, Vec<u32>)> = HashMap::new();
     for (row, line) in contents.lines().enumerate() {
         for (col, c) in line.chars().enumerate() {
             // println!("{} at {}", c, hash!(row, col));
@@ -35,9 +35,9 @@ fn main() {
             // symbol (i.e., not '.' and not digit)
             match c {
                 '.' | '0'..='9' => { },
-                _ => {
+                c => {
                     let sym_hash = hash!(row as i32, col as i32);
-                    syms.insert(sym_hash);
+                    syms.insert(sym_hash, (c, Vec::new()));
                 }
             }
         }
@@ -58,7 +58,7 @@ fn main() {
             if dopt.is_some() {
                 d = dopt.expect("Must be some to be expected");
 
-                if in_num == false {
+                if !in_num {
                     num = d;
                     in_num = true;
                 } else {
@@ -81,7 +81,7 @@ fn main() {
             }
 
             // skip if it isn't a digit
-            if in_num == false {
+            if !in_num {
                 continue;
             }
 
@@ -93,7 +93,7 @@ fn main() {
                     let checked_col = col as i32 + j;
                     // println!("({checked_col}, {checked_row})");
                     let sym_hash = hash!(checked_row, checked_col);
-                    if syms.contains(&sym_hash) {
+                    if syms.contains_key(&sym_hash) {
                         is_part = true;
                     }
                 }
