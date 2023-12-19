@@ -1,10 +1,10 @@
-use std::{fs, collections::HashMap};
+use std::{fs, collections::{HashMap, HashSet}};
 
 const TESTMODE: bool = false;
 const DAY: u8 = 3;
 
 const INPUT_COLS: i32 = 140;
-const TEST_INPUT_COLS: i32 = 140;
+const TEST_INPUT_COLS: i32 = 10;
 
 macro_rules! max_col {
     () => (if TESTMODE { TEST_INPUT_COLS } else { INPUT_COLS })
@@ -27,18 +27,21 @@ fn main() {
 
     /* CODE */
     // loop through and add all the locations of the symbols
-    let mut syms: HashMap<i32, (char, Vec<u32>)> = HashMap::new();
+    let mut syms: HashSet<i32> = HashSet::new();
+    let mut gears: HashMap<i32, Vec<u32>> = HashMap::new();
+
     for (row, line) in contents.lines().enumerate() {
         for (col, c) in line.chars().enumerate() {
             // println!("{} at {}", c, hash!(row, col));
             // add all coordinates to hashset where it is a
             // symbol (i.e., not '.' and not digit)
             match c {
-                '.' | '0'..='9' => { },
-                c => {
+                '*' => {
                     let sym_hash = hash!(row as i32, col as i32);
-                    syms.insert(sym_hash, (c, Vec::new()));
-                }
+                    syms.insert(sym_hash);
+                    gears.insert(sym_hash, Vec::new());
+                },
+                _ => ()
             }
         }
     }
@@ -49,15 +52,12 @@ fn main() {
     let mut total: u32 = 0;
     let mut in_num = false;
     let mut num: u32 = 0; // number being constructed
-    let mut is_part = false;
+    let mut gear: Option<i32> = None;
     for (row, line) in contents.lines().enumerate() {
         for (col, c) in line.chars().enumerate() {
             let dopt = c.to_digit(10);
-            let d: u32;
-            
-            if dopt.is_some() {
-                d = dopt.expect("Must be some to be expected");
 
+            if let Some(d) = dopt {
                 if !in_num {
                     num = d;
                     in_num = true;
@@ -71,10 +71,13 @@ fn main() {
                 if in_num {                   
                     // print!("Constructed {} at ({}, {})", num, row, col);
                     in_num = false;
-                    if is_part {
+                    if gear.is_some() {
+                        let gear_val = gear.expect("There must be a gear.");
                         // print!(" and it's a part!");
-                        total += num;
-                        is_part = false;
+                        let gear_vec_opt = gears.get_mut(&gear_val);
+                        let some_gear_vec = gear_vec_opt.expect("Corresponding Vec<u32> must exist.");
+                        some_gear_vec.push(num);
+                        gear = None;
                     }
                     // println!();
                 }
@@ -93,13 +96,22 @@ fn main() {
                     let checked_col = col as i32 + j;
                     // println!("({checked_col}, {checked_row})");
                     let sym_hash = hash!(checked_row, checked_col);
-                    if syms.contains_key(&sym_hash) {
-                        is_part = true;
+                    if syms.contains(&sym_hash) {
+                        gear = Some(sym_hash);
                     }
                 }
             }
         }
     }
 
+    for (_, v) in gears {
+        if v.len() == 2 {
+            let mut prod = 1;
+            for val in v {
+                prod *= val;
+            }
+            total += prod;
+        }
+    }
     println!("Total: {}", total);
 }
