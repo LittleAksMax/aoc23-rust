@@ -1,6 +1,6 @@
 use std::fs;
 
-const TESTMODE: bool = false;
+const TESTMODE: bool = true;
 const DAY: u8 = 1;
 
 fn main() {
