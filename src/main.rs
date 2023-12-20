@@ -1,14 +1,23 @@
 use std::{fs, collections::HashSet};
 
-const TESTMODE: bool = true;
+const TESTMODE: bool = false;
 const DAY: u8 = 4;
+
+// the 'Game xyz: ' has a different length in the different modes
+macro_rules! substr_start {
+    () => { if TESTMODE { 8 } else { 10 } };
+}
+
+macro_rules! games {
+    () => { if TESTMODE { 6 } else { 219 } };
+}
 
 macro_rules! expand_cards {
     ($slice:expr) => {
         (*$slice.expect("Slice must exist."))
             // split over spaces, filter out bad splits (double space) and map each remaining
             // value to their parsed integer forms after trimming (just in case)
-            .split(' ').filter(|&x| !x.is_empty()).map(|x| match x.trim().parse::<u32>() {
+            .split_ascii_whitespace().map(|x| match x.trim().parse::<u32>() {
                 Ok(n) => n,
                 _ => {
                     assert!(false, "Must be able to parse properly.");
@@ -30,9 +39,21 @@ fn main() {
     }
 
     /* CODE */
-    for line in contents.lines() {
-        let data: Vec<&str> = (&line[11..]).split(" | ").collect();
-        let winners: Vec<u32> = expand_cards!(data.first());
-        let owned: Vec<u32> = expand_cards!(data.last());
+    // cards stores [Game no. - 1] => instances (default = 1)
+    let mut cards = [1_u32; games!()];
+    for (game_idx, line) in contents.lines().enumerate() {
+        let data: Vec<&str> = (&line[substr_start!()..]).split(" | ").collect();
+        let winners: HashSet<u32> = expand_cards!(data.first());
+        let owned: HashSet<u32> = expand_cards!(data.last());
+
+        let matches = owned.intersection(&winners).count() as u32;
+
+        for i in (game_idx + 1)..(game_idx + matches as usize + 1) {
+            // each subsequent gets as many copies as we have copies of this card
+            cards[i] += cards[game_idx];
+        }
     }
+
+    // println!("Total: {}", total);
+    println!("Number of cards: {}", cards.iter().sum::<u32>());
 }
