@@ -24,14 +24,20 @@ fn main() {
     let sections: Vec<&str> = contents.split("\n\n").collect();
 
     // 7 is the length of 'seeds: '
-    let seeds: Vec<u64> = sections[0]
+    let seed_data: Vec<u64> = sections[0]
         .split(' ')
         // filter out the lines with non-digit chars by removing
         // everything where case matters
         .filter(|&x| x.to_ascii_lowercase() == x.to_ascii_uppercase())
         .map(|x| x.parse::<u64>().expect("Must parse seed correctly."))
         .collect();
-    
+
+    let mut seeds: Vec<(u64, u64)> = Vec::new();
+    let mut seed_iter = seed_data.iter();
+    for _ in 0..(seed_data.len() / 2) {
+        seeds.push((*seed_iter.next().unwrap(), *seed_iter.next().unwrap()));
+    }
+
     let mut data: [Vec<LineData>; 7] = Default::default();
     for (idx, &section) in sections[1..].iter().enumerate() {
         let mut section_line_data: Vec<LineData> = Vec::new();
@@ -53,22 +59,25 @@ fn main() {
     }
 
     let mut finals: Vec<u64> = Vec::new();
-    for seed in seeds {
-        let mut current = seed;
-        for section in data.iter() {
-            let mut found_mapping = false;
-            for mapping in section {
-                // are we in the mapping rule range
-                if !found_mapping && current >= mapping.src && current <= mapping.src + mapping.rng {
-                    // print!("{} {} {} => ", mapping.dest, mapping.src, mapping.rng);
-                    current = mapping.dest + current - mapping.src;
-                    found_mapping = true;
+    for (start, range) in seeds {
+        for seed in start..(start + range + 1) {
+            let mut current = seed;
+            for section in data.iter() {
+                let mut found_mapping = false;
+                for mapping in section {
+                    // are we in the mapping rule range
+                    if !found_mapping && current >= mapping.src && current <= mapping.src + mapping.rng {
+                        // print!("{} {} {} => ", mapping.dest, mapping.src, mapping.rng);
+                        current = mapping.dest + current - mapping.src;
+                        found_mapping = true;
+                    }
                 }
+                // println!("{} (seed {})", current, seed);
             }
-            // println!("{} (seed {})", current, seed);
+            // println!();
+            println!("{} -> {}", seed, current);
+            finals.push(current);
         }
-        // println!();
-        finals.push(current);
     }
     println!("Min location: {}", finals.iter().min().unwrap());
 }
